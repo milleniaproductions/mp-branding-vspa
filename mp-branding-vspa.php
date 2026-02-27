@@ -2,7 +2,7 @@
 /**
  * Plugin Name: VolcanoSpa® Front-end Branding
  * Description: Front-end trademark formatting for VolcanoSpa®. Normalizes all "Volcano Spa" / "VolcanoSpa" variants (any case) using safe DOM node splitting — no appendXML(), no output buffering.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Author: Millenia Productions LLC
  * Author URI: https://lapalmproducts.com
  */
@@ -26,7 +26,7 @@ function mp_vspa_enqueue_branding_css() {
         'mp-branding-vspa',
         plugin_dir_url( __FILE__ ) . 'assets/css/branding.css',
         [],
-        '1.1.4'
+        '1.1.5'
     );
 }
 add_action( 'wp_enqueue_scripts', 'mp_vspa_enqueue_branding_css' );
@@ -100,8 +100,11 @@ function mp_vspa_process_dom( DOMDocument $dom ) {
 
     if ( ! $text_nodes ) return;
 
+    // Collect first; don't mutate a live node list.
     $nodes = iterator_to_array( $text_nodes );
-    $pattern = '/\bvolcano\s*spa\b/iu';
+
+    // Match "Volcano Spa" or "VolcanoSpa" (any case), including NBSP between words.
+    $pattern = '/\bvolcano(?:[\s\x{00A0}]*)spa\b/iu';
 
     foreach ( $nodes as $node ) {
         $text = $node->nodeValue;
@@ -111,10 +114,17 @@ function mp_vspa_process_dom( DOMDocument $dom ) {
         if ( count( $segments ) < 2 ) continue;
 
         $parent = $node->parentNode;
-        $ref = $node;
+        $ref    = $node;
         $match_count = count( $segments ) - 1;
 
         for ( $i = 0; $i < count( $segments ); $i++ ) {
+
+            // If this segment follows a matched brand token, strip a leading ®/&reg; so we don't double-mark
+            // cases like: "VolcanoSpa® CBD+ Edition" (same text node).
+            if ( $i > 0 && $segments[ $i ] !== '' ) {
+                $segments[ $i ] = preg_replace( '/^\s*(?:®|&reg;)\s*/u', '', $segments[ $i ], 1 );
+            }
+
             if ( $segments[ $i ] !== '' ) {
                 $parent->insertBefore( $dom->createTextNode( $segments[ $i ] ), $ref );
             }
@@ -127,10 +137,38 @@ function mp_vspa_process_dom( DOMDocument $dom ) {
                 $span->appendChild( $dom->createTextNode( MP_VSPA_SYMBOL ) );
                 $parent->insertBefore( $span, $ref );
 
+                // Remove any immediate marks after the inserted span (skips whitespace).
                 mp_vspa_strip_following_marks( $span );
             }
         }
 
+        /**
+         * IMPORTANT:
+         * If the original content was already marked like:
+         *   [text node: "VolcanoSpa"] [span.regmark: "®"]
+         * then while we're inserting, the next sibling after our inserted span is still $ref
+         * (the original text node), so mp_vspa_strip_following_marks() cannot "see" the old span yet.
+         *
+         * After we remove $ref, that old mark becomes adjacent — so strip it now from $ref->nextSibling.
+         */
+        $next = $ref->nextSibling;
+        while ( $next ) {
+            // Skip whitespace-only text nodes
+            if ( $next->nodeType === XML_TEXT_NODE && trim( $next->nodeValue ) === '' ) {
+                $next = $next->nextSibling;
+                continue;
+            }
+
+            // Strip one leading mark/span/sup if present; repeat to collapse duplicates.
+            if ( mp_vspa_strip_leading_mark_from_node( $next ) ) {
+                $next = $ref->nextSibling;
+                continue;
+            }
+
+            break;
+        }
+
+        // Original text node is fully replaced; remove it.
         $parent->removeChild( $ref );
     }
 }
