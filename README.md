@@ -1,7 +1,7 @@
 # VolcanoSpa® Front-end Branding
 
 **Plugin Slug:** `mp-branding-vspa`  
-**Current Version:** 1.1.4  
+**Current Version:** 1.1.5  
 **Author:** Millenia Productions LLC  
 **Author URI:** https://lapalmproducts.com  
 
@@ -17,6 +17,7 @@ The plugin normalizes variations such as:
 - `volcanospa`
 - `VOLCANO SPA`
 - `Volcano Spa®`
+- `VolcanoSpa®` (same text node)
 
 and renders them as:
 
@@ -33,8 +34,10 @@ All processing occurs at output time. The database is never modified.
 ### Normalization Rules
 
 - Matches `Volcano Spa` and `VolcanoSpa` (any case)
-- Prevents duplicate registered symbols
-- Safely handles adjacent text-node marks
+- Handles spacing variations, including non-breaking spaces (NBSP)
+- Prevents duplicate registered symbols, including:
+  - Same-node cases like `VolcanoSpa® ...`
+  - Already-marked HTML cases like `...<span class="regmark">®</span>`
 - Avoids mutation inside:
   - `<script>`
   - `<style>`
@@ -70,8 +73,6 @@ The stylesheet is enqueued on the front end only.
 
 ### SEO Safety
 
-As of version 1.1.4:
-
 - The plugin does **not** filter `bloginfo`
 - The plugin does **not** modify document `<title>` output
 - The plugin does **not** alter meta tag content
@@ -101,6 +102,11 @@ This plugin follows Semantic Versioning:
 ---
 
 ## Changelog
+
+### 1.1.5
+- Fix: Prevent double ® in same-text-node cases (e.g., `VolcanoSpa® CBD+ Edition`).
+- Fix: Improve duplicate-mark stripping when input is already marked.
+- Fix: Match Elementor/Builder spacing variants (NBSP-safe matching).
 
 ### 1.1.4
 - Remove `bloginfo` filter to prevent modification of document title and meta outputs.
