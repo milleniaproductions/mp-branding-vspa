@@ -2,7 +2,7 @@
 /**
  * Plugin Name: VolcanoSpa® Front-end Branding
  * Description: Front-end trademark formatting for VolcanoSpa®. Normalizes all "Volcano Spa" / "VolcanoSpa" variants (any case) using safe DOM node splitting — no appendXML(), no output buffering.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Millenia Productions LLC
  * Author URI: https://lapalmproducts.com
  */
@@ -26,7 +26,7 @@ function mp_vspa_enqueue_branding_css() {
         'mp-branding-vspa',
         plugin_dir_url( __FILE__ ) . 'assets/css/branding.css',
         [],
-        '1.1.3'
+        '1.1.4'
     );
 }
 add_action( 'wp_enqueue_scripts', 'mp_vspa_enqueue_branding_css' );
@@ -200,7 +200,6 @@ add_filter( 'widget_text_content',     'mp_vspa_filter', 20 );
 add_filter( 'get_the_archive_title',   'mp_vspa_filter', 20 );
 add_filter( 'nav_menu_item_title',     'mp_vspa_filter', 20 );
 add_filter( 'term_description',        'mp_vspa_filter', 20 );
-add_filter( 'bloginfo',                'mp_vspa_filter', 20 );
 add_filter( 'woocommerce_short_description',           'mp_vspa_filter', 20 );
 add_filter( 'woocommerce_product_get_name',            'mp_vspa_filter', 20 );
 add_filter( 'woocommerce_product_variation_get_name',  'mp_vspa_filter', 20 );
